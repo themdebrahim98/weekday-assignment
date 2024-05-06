@@ -3,28 +3,38 @@ import axios from "axios";
 import { getFilterData } from "../util";
 
 // asynchronous thunk to fetch jobs
-export const fetchJobs = createAsyncThunk("job/fetchJobs", async () => {
-  try {
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
-    const body = JSON.stringify({
-      limit: 10,
-      offset: 0,
-    });
-    console.log("SC");
-    const response = await axios.post(
-      "https://api.weekday.technology/adhoc/getSampleJdJSON",
-      body,
-      config
-    );
-    return response.data; // Assuming the response contains an array of jobs
-  } catch (error) {
-    throw Error("Failed to fetch jobs"); // Throw an error if fetching fails
+export const fetchJobs = createAsyncThunk(
+  "job/fetchJobs",
+  async (_, thunkAPI) => {
+    try {
+      const pageOffSet = thunkAPI.getState().jobs.pageOffSet;
+      const limit = 5;
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+
+      const body = JSON.stringify({
+        limit: limit,
+        offset: pageOffSet,
+      });
+
+      const response = await axios.post(
+        "https://api.weekday.technology/adhoc/getSampleJdJSON",
+        body,
+        config
+      );
+      console.log(response.data);
+      // Dispatch the setPageOffset action to update the pageOffset in the Redux store
+      thunkAPI.dispatch(setPageOffset(limit + pageOffSet));
+
+      return response.data; // Assuming the response contains an array of jobs
+    } catch (error) {
+      throw Error("Failed to fetch jobs"); // Throw an error if fetching fails
+    }
   }
-});
+);
 
 const initialState = {
   jobs: [],
@@ -33,12 +43,18 @@ const initialState = {
   filters: {},
   filteredJobs: [], // New field to store filtered jobs locally
   filtering: false, // New field to indicate if filtering is in progress.
+  pageOffSet: 0,
+  totalCount: 0,
 };
 
 export const jobSlice = createSlice({
   name: "job",
   initialState,
   reducers: {
+    setPageOffset: (state, action) => {
+      console.log(action.payload);
+      state.pageOffSet = action.payload;
+    },
     setFilters: (state, action) => {
       state.filters = {
         ...state.filters,
@@ -47,15 +63,14 @@ export const jobSlice = createSlice({
       state.filtering = true;
     },
 
-    applyFilter: (state, action) => {
+    applyFilter: (state) => {
       const filteredData = getFilterData(state);
-      state.filteredJobs = {
-        jdList: filteredData,
-      };
+      state.filteredJobs = filteredData;
       state.filtering = false;
     },
 
     updateFilter: (state, action) => {
+      state.filtering = true;
       const category = action.payload.name;
       const value = action.payload.value;
       //finding category from filters and update category
@@ -70,6 +85,7 @@ export const jobSlice = createSlice({
     clearFilter: (state, action) => {
       const category = action.payload.name;
       delete state.filters[category];
+      state.filtering = true;
     },
   },
 
@@ -81,8 +97,11 @@ export const jobSlice = createSlice({
       })
       .addCase(fetchJobs.fulfilled, (state, action) => {
         state.loading = false;
-        state.jobs = action.payload;
-        state.filteredJobs = action.payload; // Set filteredJobs initially with all jobs
+        const jobsList = action.payload.jdList;
+
+        state.jobs = [...state.jobs, ...jobsList];
+        state.filteredJobs = [...state.jobs];
+        state.totalCount = action.payload.totalCount;
       })
       .addCase(fetchJobs.rejected, (state, action) => {
         state.loading = false;
@@ -92,7 +111,12 @@ export const jobSlice = createSlice({
 });
 
 // Action creators are generated for each case reducer function
-export const { setFilters, updateFilter, clearFilter, applyFilter } =
-  jobSlice.actions;
+export const {
+  setFilters,
+  updateFilter,
+  clearFilter,
+  applyFilter,
+  setPageOffset,
+} = jobSlice.actions;
 
 export default jobSlice.reducer;
