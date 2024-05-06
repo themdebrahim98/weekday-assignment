@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import styles from "./Jobs.module.css";
 import Box from "@mui/material/Box";
-import { Container, Typography } from "@mui/material";
+import { Container, FormControl } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import JobCard from "../JobCard/JobCard";
@@ -19,10 +18,9 @@ import Loader from "../Loader/Loader";
 export default function Jobs() {
   const dispatch = useDispatch();
   const state = useSelector((state) => state.jobs);
-  const [isAtBottom, setIsAtBottom] = useState(false);
-  const scrollContainerRef = useRef(null);
 
-  const handleChangeRole = async (val, name, reason, details) => {
+  // When filtering change
+  const handleFilterChange = async (val, name, reason, details) => {
     if (reason === "removeOption") {
       dispatch(
         updateFilter({
@@ -49,6 +47,7 @@ export default function Jobs() {
     }
   };
 
+  // when company name change
   const handleCompanyNameChange = async (e) => {
     dispatch(
       setFilters({
@@ -59,47 +58,43 @@ export default function Jobs() {
     await wait(1000);
     dispatch(applyFilter());
   };
-  const handleScroll = async () => {
-    const container = scrollContainerRef.current;
-    if (
-      container.clientHeight + container.scrollTop + 250 >=
-      container.scrollHeight
-    ) {
-      // Load more jobs when the user reaches the bottom of the container
-      console.log("loading more data....");
-      !state.loading && (await dispatch(fetchJobs()));
-      dispatch(applyFilter());
-    }
-  };
 
+  // Load more jobs when the user reaches the bottom of the page
   useEffect(() => {
-    // Hide main document scrollbar when the component mounts
-    document.body.style.overflow = "hidden";
-
-    // Cleanup: Revert back to the default behavior when the component unmounts
+    const handleScroll = async () => {
+      const scrollTop = document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight;
+      if (clientHeight + scrollTop + 5 >= scrollHeight) {
+        // Load more jobs when the user reaches the bottom of the container
+        console.log("loading more data....");
+        !state.loading && (await dispatch(fetchJobs()));
+        dispatch(applyFilter());
+      }
+    };
+    // Add scroll event listener to the document
+    document.addEventListener("scroll", handleScroll);
+    // Remove the event listener when the component unmounts
     return () => {
-      document.body.style.overflow = "auto";
+      document.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
+  // After render this page fetch data from server
   useEffect(() => {
     dispatch(fetchJobs());
   }, []);
 
-  console.log(isAtBottom);
   return (
     <Container maxWidth="xl">
       <Box
-        onScroll={handleScroll}
-        ref={scrollContainerRef}
         sx={{
           bgcolor: "white",
           color: "black",
           display: "flex",
           flexDirection: "column",
           gap: "45px",
-          height: "100vh",
-          overflowY: "scroll",
+          minHeight: "120vh",
           position: "relative",
           pt: "8px",
         }}
@@ -110,34 +105,34 @@ export default function Jobs() {
 
         {/* Filters elements */}
         <Box
-          className={styles["hero"]}
           sx={{
             display: "flex",
             gap: "5px",
             flexFlow: "wrap",
             zIndex: "50",
-            background: "#ddd",
+            background: "#ffffff",
             position: "sticky",
             top: 0,
             p: "0 15px 0 15px",
           }}
         >
-          {allFiltersElements.map((ef) => (
+          {allFiltersElements.map((ef, idx) => (
             <Autocomplete
-              name={ef.tile}
+              key={idx}
+              name={ef.title}
               onChange={(e, val, reason, details) => {
-                handleChangeRole(val, ef.tile, reason, details);
+                handleFilterChange(val, ef.title, reason, details);
               }}
               multiple={ef.isMultiple}
-              id="tags-outlined"
+              id={ef.title}
               options={ef.option}
               getOptionLabel={(option) => option.title}
               filterSelectedOptions
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label={ef.tile}
-                  placeholder={ef.tile}
+                  label={ef.title}
+                  placeholder={ef.title}
                   sx={{ minWidth: "200px" }}
                 />
               )}
@@ -157,7 +152,7 @@ export default function Jobs() {
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minMax(300px, 1fr))",
             gap: "20px",
-            p: "0 5px 100px 5px",
+            p: "0 8px 50px 8px",
           }}
         >
           {!state.filtering &&

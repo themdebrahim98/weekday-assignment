@@ -33,13 +33,7 @@ const JobCard = ({
       }}
     >
       <CardContent>
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            alignItems: "center",
-          }}
-        >
+        <Box flex alignItems={"center"} gap={10} flexDirection={"column"}>
           <Avatar src={logo} />
           <div>
             {company && (
@@ -60,7 +54,7 @@ const JobCard = ({
               {jobRole}
             </Typography>
           </div>
-        </div>
+        </Box>
 
         {location && (
           <Typography variant="subtitle1" color="text.secondary" gutterBottom>
@@ -107,7 +101,7 @@ const JobCard = ({
           </Typography>
         )}
         {applyLink && (
-          <Button variant="contained" color="primary">
+          <Button variant="contained" color="primary" fullWidth>
             <a
               href={applyLink}
               style={{

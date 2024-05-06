@@ -8,7 +8,7 @@ export const fetchJobs = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const pageOffSet = thunkAPI.getState().jobs.pageOffSet;
-      const limit = 5;
+      const limit = 25;
       const config = {
         headers: {
           "Content-Type": "application/json",
@@ -25,7 +25,6 @@ export const fetchJobs = createAsyncThunk(
         body,
         config
       );
-      console.log(response.data);
       // Dispatch the setPageOffset action to update the pageOffset in the Redux store
       thunkAPI.dispatch(setPageOffset(limit + pageOffSet));
 
@@ -41,20 +40,20 @@ const initialState = {
   loading: false,
   error: "",
   filters: {},
-  filteredJobs: [], // New field to store filtered jobs locally
-  filtering: false, // New field to indicate if filtering is in progress.
+  filteredJobs: [],
+  filtering: false,
   pageOffSet: 0,
   totalCount: 0,
 };
 
 export const jobSlice = createSlice({
-  name: "job",
+  name: "jobs",
   initialState,
   reducers: {
     setPageOffset: (state, action) => {
-      console.log(action.payload);
       state.pageOffSet = action.payload;
     },
+
     setFilters: (state, action) => {
       state.filters = {
         ...state.filters,
@@ -73,13 +72,9 @@ export const jobSlice = createSlice({
       state.filtering = true;
       const category = action.payload.name;
       const value = action.payload.value;
-      //finding category from filters and update category
       state.filters[category] = state.filters[category].filter(
         (elm) => elm.value !== value.value
       );
-      // if (state.filters[category].length == 0) {
-      //   delete state.filters[category];
-      // }
     },
 
     clearFilter: (state, action) => {

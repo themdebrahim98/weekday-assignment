@@ -85,8 +85,8 @@ const salary = [
   { title: "78L", value: 78 },
 ];
 export const allFiltersElements = [
-  { tile: "Role", option: roles, isMultiple: true },
-  { tile: "Remote", option: remote, isMultiple: true },
-  { tile: "Minimum_Base_Salary", option: salary, isMultiple: false },
-  { tile: "Experience", option: experience, isMultiple: false },
+  { title: "Role", option: roles, isMultiple: true },
+  { title: "Remote", option: remote, isMultiple: true },
+  { title: "Minimum_Base_Salary", option: salary, isMultiple: false },
+  { title: "Experience", option: experience, isMultiple: false },
 ];
